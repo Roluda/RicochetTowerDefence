@@ -6,19 +6,15 @@ using UnityEngine;
 using System.Linq;
 
 namespace RTD.Units.UnitComponents {
-    public class Navigator : UnitComponent {
-
-        [SerializeField]
-        NavigatorSettings settings = default;
-        [SerializeField]
-        LayerMask obstacles = default;
-
-        HexNav nav = default;
-        HexMap map = default;
+    public class Navigator : UnitComponent<NavigatorSettings> {
+        public HexNav nav { get; private set; }
+        public HexMap map { get; private set; }
 
         Queue<Hex3> currentPath = new Queue<Hex3>();
-        Hex3 currentPosition => map.GetHexPosition(transform.position);
+        public Hex3 position => map.GetHexPosition(transform.position);
 
+
+        public Queue<Hex3> pathPreview => new Queue<Hex3>(currentPath);
         public bool hasPath => pathLength > 0;
         public int pathLength => currentPath.Count;
 
@@ -32,7 +28,7 @@ namespace RTD.Units.UnitComponents {
         }
 
         public void CalculatePath(Hex3 target) {
-            if (nav.TryFindPath(currentPosition, target, out var path, settings.obstacles)){
+            if (nav.TryFindPath(position, target, out var path, settings.obstacles)){
                 currentPath = new Queue<Hex3>(path);
             } else {
                 currentPath = new Queue<Hex3>();
@@ -40,32 +36,32 @@ namespace RTD.Units.UnitComponents {
         }
 
         public Hex3 Slide(Direction direction) {
-            if(nav.CanMove(currentPosition, direction)) {
-                return nav.Slide(currentPosition, direction).Last();
+            if(nav.CanMove(position, direction, settings.obstacles)) {
+                return nav.Slide(position, direction, settings.obstacles).Last();
             }
-            return currentPosition;
+            return position;
         }
 
         public Hex3 Peek() {
             if (hasPath) {
                 return currentPath.Peek();
             }
-            return currentPosition;
+            return position;
         }
 
         public Hex3 Dequeue() {
             if (hasPath) {
                 return currentPath.Dequeue();
             }
-            return currentPosition;
+            return position;
         }
 
         public bool CanMove(Direction direction) {
-            return nav.CanMove(currentPosition, direction, settings.obstacles);
+            return nav.CanMove(position, direction, settings.obstacles);
         }
 
         public bool Obstructed(Hex3 position) {
-            return nav.Obstructed(position);
+            return nav.Obstructed(position, settings.obstacles);
         }
     }
 }

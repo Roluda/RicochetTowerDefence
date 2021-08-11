@@ -65,9 +65,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hexMap: {fileID: 6174257263413306936}
-  walkableLayer:
+  obstacles:
     serializedVersion: 2
-    m_Bits: 448
+    m_Bits: 1984
 --- !u!1 &8136938507934623316
 GameObject:
   m_ObjectHideFlags: 0

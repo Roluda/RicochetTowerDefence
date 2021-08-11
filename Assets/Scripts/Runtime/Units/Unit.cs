@@ -22,7 +22,14 @@ namespace RTD.Units {
             }
         }
 
-        public bool TryGetUnitComponent<T>(out T component) where T : UnitComponent {
+        public T UnitComponent<T>() where T : UnitComponent {
+            if (componentsDict.TryGetValue(typeof(T), out var candidates)) {
+                return candidates[0] as T;
+            }
+            return null;
+        }
+
+        public bool UnitComponent<T>(out T component) where T : UnitComponent {
             if(componentsDict.TryGetValue(typeof(T), out var candidates)){
                 component = candidates[0] as T;
                 return true;
@@ -31,7 +38,7 @@ namespace RTD.Units {
             return false;
         }
 
-        public IEnumerable<T> GetUnitComponents<T>() where T: UnitComponent {
+        public IEnumerable<T> UnitComponents<T>() where T: UnitComponent {
             if (componentsDict.TryGetValue(typeof(T), out var candidates)) {
                 return candidates as List<T>;
             }

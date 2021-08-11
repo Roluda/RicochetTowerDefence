@@ -13,9 +13,9 @@ namespace RTD.Hexgrid {
 
         LayerMask lastUsedLayer;
 
-        IEnumerable<Hex3> obstacleCache;
+        IEnumerable<Hex3> walkableCache;
 
-        List<HexNavAgent> agents = default;
+        List<HexNavAgent> agents = new List<HexNavAgent>();
 
         private void OnValidate() {
             if (!hexMap) {
@@ -29,7 +29,7 @@ namespace RTD.Hexgrid {
 
         public IEnumerable<Hex3> Slide(Hex3 start, Direction direction, LayerMask obstacles) {
             var nextStep = start;
-            while(CanMove(start, direction, obstacles)) {
+            while(CanMove(nextStep, direction, obstacles)) {
                 nextStep = nextStep.Neighbor(direction);
                 yield return nextStep;
             }
@@ -40,9 +40,9 @@ namespace RTD.Hexgrid {
         }
 
         public bool Obstructed(Hex3 test, LayerMask obstacles) {
-            return hexMap.TryGetObject(test, out var gameObject)
-                && !IsOnLayer(gameObject.layer, obstacles)
-                && !agents.Where(agent => IsOnLayer(agent.gameObject.layer, obstacles)).Any(agent => agent.hexPosition == test);
+            return !hexMap.TryGetObject(test, out var gameObject)
+                || IsOnLayer(gameObject.layer, obstacles)
+                || agents.Where(agent => IsOnLayer(agent.gameObject.layer, obstacles)).Any(agent => agent.hexPosition == test);
         }
 
         public bool CanMove(Hex3 start, Direction direction) {
@@ -50,7 +50,7 @@ namespace RTD.Hexgrid {
         }
 
         public bool CanMove(Hex3 start, Direction direction, LayerMask obstacles) {
-            return Obstructed(start.Neighbor(direction), obstacles);
+            return !Obstructed(start.Neighbor(direction), obstacles);
         }
 
         public bool TryFindPath(Hex3 start, Hex3 goal, out IEnumerable<Hex3> path) {
@@ -58,18 +58,18 @@ namespace RTD.Hexgrid {
         }
 
         public bool TryFindPath(Hex3 start, Hex3 goal, out IEnumerable<Hex3> path, LayerMask obstacles) {
-            if(obstacleCache == null || lastUsedLayer != obstacles) {
+            if(walkableCache == null || lastUsedLayer != obstacles) {
                 lastUsedLayer = obstacles;
-                obstacleCache = hexMap.GetAllObjects().Where((tile) => !IsOnLayer(tile.Item2.layer, obstacles)).Select(tile => tile.Item1);
+                walkableCache = hexMap.GetAllObjects().Where((tile) => !IsOnLayer(tile.Item2.layer, obstacles)).Select(tile => tile.Item1);
             }
-            var availableHexes = obstacleCache
-                .Except(agents.Where(agent => !IsOnLayer(agent.gameObject.layer, obstacles))
+            var availableHexes = walkableCache
+                .Except(agents.Where(agent => IsOnLayer(agent.gameObject.layer, obstacles) && agent.hexPosition != start)
                 .Select(agent => agent.hexPosition));
             return HexUtility.TryFindPath(start, goal, availableHexes, out path);
         } 
 
-        bool IsOnLayer(int layer, LayerMask walkableLayers) {
-            return (walkableLayers & layer) == layer;
+        bool IsOnLayer(int layer, LayerMask obstructed) {
+            return (obstructed & (1<<layer)) == (1<<layer);
         }
 
         public void RegisterAgent(HexNavAgent agent) {

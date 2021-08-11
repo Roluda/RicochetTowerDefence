@@ -6,7 +6,6 @@ using UnityEngine;
 
 namespace RTD.Hexgrid {
     public class HexMap : MonoBehaviour {
-
         [SerializeField]
         float size = 1;
         [SerializeField]
@@ -18,7 +17,7 @@ namespace RTD.Hexgrid {
 
         [SerializeField, HideInInspector] HexDictionary map = new HexDictionary();
 
-    public Vector3 GetWorldPosition(Hex3 hexagon) {
+        public Vector3 GetWorldPosition(Hex3 hexagon) {
             var cartesian = Hex3.HexToCartesian(hexagon, orientation, size);
             switch (dimensions) {
                 case Dimensions.XY:
@@ -66,10 +65,10 @@ namespace RTD.Hexgrid {
         }
 
         public IEnumerable<(Hex3, GameObject)> GetAllObjects() {
-            foreach(var hex in map) {
+            foreach (var hex in map) {
                 yield return (hex.Key, hex.Value);
             }
-        } 
+        }
 
         public Vector3 HexCorner(Hex3 hexagon, int index) {
             var center = GetWorldPosition(hexagon);
@@ -87,6 +86,10 @@ namespace RTD.Hexgrid {
                 default:
                     throw new NotImplementedException($"{dimensions} does not have a case");
             }
+        }
+
+        private void OnDrawGizmos() {
+            Gizmos.DrawWireSphere(context.position, 1);
         }
 
         #region UnityEditor API

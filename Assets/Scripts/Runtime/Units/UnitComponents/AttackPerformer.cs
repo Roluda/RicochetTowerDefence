@@ -6,17 +6,23 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace RTD.Units.UnitComponents {
-    public class AttackPerformer : UnitComponent {
+    public class AttackPerformer : UnitComponent<AttackPerformerSettings> {
         HexMap map;
 
         Hex3 position => map.GetHexPosition(transform.position);
 
-        [SerializeField]
-        AttackPerformerSettings settings;
+        public int range => settings.range;
+        public float radius => settings.radius;
 
+        TeamMembership selfMembership;
         private void Awake() {
             if (!map) {
                 map = GetComponentInParent<HexMap>();
+            }
+        }
+        private void Start() {
+            if(unit.UnitComponent<Team>(out var team)) {
+                selfMembership = team.membership;
             }
         }
 
@@ -27,7 +33,7 @@ namespace RTD.Units.UnitComponents {
             var colliders = Physics.OverlapSphere(map.GetWorldPosition(target), settings.radius, settings.hittableLayer);
             foreach(var col in colliders) {
                 if(col.TryGetComponent<Unit>(out var unit)) {
-                    if(unit.TryGetUnitComponent<Hurtbox>(out var hurtbox)) {
+                    if (unit.UnitComponent<Hurtbox>(out var hurtbox)) {
                         HandleHit(hurtbox);
                     }
                 }
@@ -35,8 +41,12 @@ namespace RTD.Units.UnitComponents {
         }
 
         void HandleHit(Hurtbox hurtbox) {
-            if (hurtbox.unit.TryGetUnitComponent<Life>(out var life)) {
-                life.TakeDamage(settings.damage);
+            if (hurtbox.unit.UnitComponent<Team>(out var team) && team.IsFoe(selfMembership)) {
+                Debug.Log("Foe");
+                if (hurtbox.unit.UnitComponent<Life>(out var life)) {
+                    Debug.Log("Life");
+                    life.TakeDamage(settings.damage);
+                }
             }
         }
     }

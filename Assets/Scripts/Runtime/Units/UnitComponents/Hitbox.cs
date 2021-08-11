@@ -3,20 +3,18 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace RTD.Units.UnitComponents {
-    public class Hitbox : UnitComponent {
-        [SerializeField]
-        HitboxSettings settings = default;
+    public class Hitbox : UnitComponent<HitboxSettings> {
 
         private void OnTriggerEnter(Collider other) {
             if (other.gameObject.TryGetComponent<Unit>(out var enemy)) {
-                if(enemy.TryGetUnitComponent<Hurtbox>(out var hurtbox)) {
+                if(enemy.UnitComponent<Hurtbox>(out var hurtbox)) {
                     HandleHit(hurtbox);
                 }
             }
         }
 
         void HandleHit(Hurtbox hurtbox) {
-            if(hurtbox.unit.TryGetUnitComponent<Life>(out var life)) {
+            if(hurtbox.unit.UnitComponent<Life>(out var life)) {
                 life.TakeDamage(settings.collisionDamage);
             }
         }
